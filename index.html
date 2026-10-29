@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
+<title>예외 구조대</title>
+<meta name="description" content="분명히 썼는데 0바이트? — 파이썬 예외 처리(try·except·else·finally·raise)와 파일 모드, 버퍼, with 문, CSV를 손으로 체험하는 앱">
+<style>
+:root{--bg:#151a22;--card:#1c232e;--card2:#25303d;--fg:#eff3f8;--mut:#a3b0c2;--line:#33425a;
+--a:#7cc4ff;--b:#ff9b5c;--ok:#6fdc9a;--bad:#ff7d7d;--gold:#ffd166;--pur:#b79cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.55}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 14px 40px}
+h1{font-size:1.2rem;margin:6px 0}
+h1 small{display:block;font-size:.76rem;color:var(--mut);font-weight:400}
+.tabs{display:flex;gap:5px;margin:10px 0}
+.tabs button{flex:1;padding:9px 2px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;font-size:.84rem;font-weight:600}
+.tabs button.on{background:#24406e;color:#fff;border-color:var(--a)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+h2{font-size:1rem;margin:2px 0 8px}
+.note{font-size:.86rem;color:var(--mut);margin:8px 0 0}
+.note b{color:var(--fg)}
+.btn{padding:11px 14px;border-radius:12px;border:0;background:linear-gradient(135deg,#2f6fd0,#7cc4ff);color:#fff;font-weight:800;font-size:.95rem;flex:1}
+.btn.sec{background:var(--card2);border:1px solid var(--line);color:var(--fg);font-weight:700}
+.btn.red{background:linear-gradient(135deg,#a33,#ff7d7d)}
+.btn.sm{flex:none;padding:7px 11px;font-size:.82rem}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:8px}
+.pill{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.84rem}
+.pill.on{border-color:var(--gold);background:#4a3e1a;color:#fff}
+.lbl{font-size:.8rem;color:var(--mut)}
+canvas{display:block;width:100%;border-radius:12px;background:#10141b;margin-top:8px}
+.say{background:#16304c;border-left:3px solid var(--a);border-radius:8px;padding:9px 11px;font-size:.92rem;margin-top:10px}
+.say b{color:#fff}
+.say.q{border-left-color:var(--b);background:#2e2118}
+.res{margin-top:10px;font-size:.92rem;border-radius:10px;padding:10px 12px}
+.res.g{background:#16352a;border:1px solid #2f7a52}
+.res.r{background:#3a1d1d;border:1px solid #8a3a3a}
+.res.y{background:#3a3218;border:1px solid #8a7a3a}
+.code{background:#0f131a;border:1px solid #26324a;border-radius:10px;padding:9px 11px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.65;white-space:pre;overflow-x:auto;margin-top:8px}
+.code .k{color:#ff9bd2}.code .s{color:#a5e38a}.code .c{color:#6b7a90}.code .n{color:#ffd166}.code .f{color:#7cc4ff}
+.code .ln{display:block;margin:0 -11px;padding:0 11px;border-left:3px solid transparent;transition:background .25s}
+.code .ln.hl{background:#3a3218;border-left-color:var(--gold)}
+.code .ln.dead{opacity:.35}
+.code .ln.err{background:#3a1d1d;border-left-color:var(--bad)}
+.out{background:#0b0e13;border-radius:10px;padding:8px 11px;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;min-height:38px;white-space:pre-wrap;word-break:break-all}
+.out .e{color:#ff7d7d;font-weight:700}.out .p{color:#6b7a90}.out .o{color:#6fdc9a}.out .w{color:#ffd166}
+.opsg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.opsg button{padding:9px 8px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.78rem;font-family:ui-monospace,Menlo,Consolas,monospace;text-align:left}
+.opsg button.on{border-color:var(--gold);background:#4a3e1a}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opts button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.9rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+.opts button.right{border-color:#6fdc9a;background:#16352a}
+.opts button.wrong{border-color:#ff7d7d;background:#3a1d1d}
+.stream{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.stream span{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;padding:5px 8px;border-radius:8px;background:var(--card2);border:1px solid var(--line);transition:all .25s}
+.stream span.ok{background:#16352a;border-color:#2f7a52}
+.stream span.bad{background:#3a1d1d;border-color:#ff7d7d}
+.stream span.skip{opacity:.3}
+.stream span.cur{border-color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.stats div{background:var(--card2);border-radius:10px;padding:7px 6px;text-align:center;font-size:.74rem;color:var(--mut)}
+.stats div b{display:block;font-size:1.02rem;color:var(--fg);font-variant-numeric:tabular-nums}
+.file{background:#f4f1e8;color:#222;border-radius:10px;padding:8px 11px;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.84rem;min-height:60px;white-space:pre-wrap;transition:background .3s;position:relative}
+.file .t{display:block;font-family:-apple-system,"Malgun Gothic",sans-serif;font-size:.72rem;color:#777;margin-bottom:4px}
+.file.wipe{background:#ffb3b3}
+.file.add{background:#c9f2d6}
+.file.none{background:#2a2f38;color:#a3b0c2}
+.file .new{background:#ffe08a}
+.mtab{width:100%;border-collapse:collapse;margin-top:8px;font-size:.82rem}
+.mtab td,.mtab th{border:1px solid var(--line);padding:5px 7px;text-align:left}
+.mtab th{background:var(--card2)}
+.mtab td:first-child{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--gold);text-align:center}
+.xl{width:100%;border-collapse:collapse;margin-top:8px;font-size:.82rem;background:#fff;color:#222;border-radius:8px;overflow:hidden}
+.xl td{border:1px solid #c8ccd2;padding:3px 6px;height:24px}
+.xl td.rn{background:#e9ecef;color:#666;width:28px;text-align:center;font-size:.72rem}
+.xl tr.blank td:not(.rn){background:#ffe3e3}
+.cnt{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.cnt .d{display:grid;grid-template-columns:52px 1fr 30px;gap:8px;align-items:center;font-size:.84rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+.cnt .bar{height:16px;border-radius:8px;background:linear-gradient(90deg,#a33,#ff7d7d);transition:width .4s}
+.sw{display:flex;align-items:center;gap:8px;font-size:.86rem}
+.sw input{width:18px;height:18px}
+input[type=range]{width:100%}
+input[type=text]{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#10141b;color:var(--fg);font-size:.92rem}
+.sum3{margin-top:12px;background:linear-gradient(135deg,#1d3358,#3a2a5a);border-radius:14px;padding:12px 14px}
+.sum3 ol{margin:4px 0;padding-left:20px;font-size:.92rem}
+.mine{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mine div{display:flex;justify-content:space-between;gap:8px;background:var(--card2);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.mine button{border:0;background:none;color:var(--mut);font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:18px}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🛟 예외 구조대<small>분명히 썼는데 0바이트? — 예외 처리와 안전한 파일 쓰기</small></h1>
+<div class="tabs">
+  <button class="on" data-tab="t1">① 예외</button>
+  <button data-tab="t2">② try 흐름</button>
+  <button data-tab="t3">③ 파일 모드</button>
+  <button data-tab="t4">④ 버퍼·with</button>
+</div>
+
+<!-- ① -->
+<section id="tab-t1">
+  <div class="card">
+    <h2>🕵️ 사건 접수: 100줄을 썼는데 0바이트</h2>
+    <div class="code"><span class="ln">f = <span class="f">open</span>(<span class="s">"설비기록.txt"</span>, <span class="s">"w"</span>, encoding=<span class="s">"utf-8"</span>)</span><span class="ln"><span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="n">100</span>):</span><span class="ln">    f.write(line)        <span class="c"># 한 줄 36바이트</span></span><span class="ln"><span class="f">print</span>(os.path.getsize(<span class="s">"설비기록.txt"</span>))</span></div>
+    <div class="out"><span class="p">&gt;&gt;&gt; 실행 결과</span>
+<span class="e">0</span></div>
+    <div class="say q">36 × 100 = <b>3,600바이트</b>를 썼는데 왜 0일까요? 그리고 여기서 프로그램이 강제로 꺼지면 백 줄은 어디로 갈까요? 비밀은 <b>④ 버퍼·with</b>에서 풀립니다. 먼저 넘어지는 법부터 보겠습니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>🧱 구문 에러 vs 예외</h2>
+    <p class="note" style="margin-top:0">두 코드를 실행해 보세요. <b>첫 줄 print가 찍히는지</b>를 보세요.</p>
+    <div class="opsg" id="synOps">
+      <button data-s="syn">print("시작")<br>print("끝"</button>
+      <button data-s="exc">print("시작")<br>print(10 / 0)</button>
+    </div>
+    <div class="out" id="synOut"><span class="p">버튼을 눌러 실행</span></div>
+    <div class="say" id="synSay">구문 에러는 <b>실행 전에</b> 코드를 읽다가 멈춥니다. 예외는 <b>실행 중에</b> 생깁니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>🗂️ 자주 만나는 예외 6종</h2>
+    <p class="note" style="margin-top:0">코드를 눌러 오류 메시지의 <b>마지막 줄</b>을 읽어 보세요. 그다음 맞히기에 도전!</p>
+    <div class="opsg" id="exOps"></div>
+    <div class="out" id="exOut"><span class="p">코드를 눌러 실행</span></div>
+    <div class="say" id="exSay">오류 메시지는 아래에서부터 — <b>예외 이름: 설명</b>을 먼저 읽는 습관이 디버깅의 절반입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 예외 이름 맞히기 <span class="lbl" id="mgSc"></span></h2>
+    <div class="code" id="mgCode"></div>
+    <div class="opts" id="mgOpts"></div>
+    <div id="mgMsg"></div>
+    <div class="row" style="margin-top:8px"><button class="btn sec sm" id="mgNext">다음 문제 ▶</button></div>
+  </div>
+
+  <div class="card">
+    <h2>📡 센서가 이상한 값을 보낼 때</h2>
+    <p class="note" style="margin-top:0">센서 값 7개를 <b>float()</b>로 바꿉니다. 중간에 글자가 섞여 있습니다.</p>
+    <div class="row"><button class="pill on" data-st="no">try 없이</button><button class="pill" data-st="yes">try·except로</button></div>
+    <div class="code" id="stCode"></div>
+    <div class="stream" id="stStream"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="stRun">▶ 처리 시작</button></div>
+    <div class="out" id="stOut"></div>
+    <div id="stMsg"></div>
+  </div>
+</section>
+
+<!-- ② -->
+<section id="tab-t2" hidden>
+  <div class="card">
+    <h2>🔀 try · except · else · finally 흐름</h2>
+    <div class="row"><span class="lbl">나누는 수 x</span><button class="pill on" data-dv="2">x = 2</button><button class="pill" data-dv="0">x = 0</button></div>
+    <label class="sw" style="margin-top:8px"><input type="checkbox" id="flBoom"> except 블록 안에서 <b>또</b> 예외가 난다면?</label>
+    <div class="code" id="flCode"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="flRun">▶ 한 줄씩 실행</button></div>
+    <div class="out" id="flOut"></div>
+    <div id="flMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>❓ 퀴즈 ①</h2>
+    <div class="say q">try에서 <b>10 / 2</b>를 계산합니다. except ZeroDivisionError에서는 E, else에서는 L, finally에서는 F를 출력합니다. 무엇이 출력될까요?</div>
+    <div class="opts" id="qz1">
+      <button data-a="EF">E F</button>
+      <button data-a="LF">L F</button>
+      <button data-a="F">F</button>
+    </div>
+    <div id="qz1Msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🪜 except 순서: 구체적인 것이 위로</h2>
+    <div class="row"><span class="lbl">순서</span><button class="pill on" data-od="good">구체적 → 넓게</button><button class="pill" data-od="bad">Exception 맨 위</button></div>
+    <div class="row"><span class="lbl">센서 값 s</span><button class="pill on" data-iv="txt">"공정실패"</button><button class="pill" data-iv="zero">"0"</button><button class="pill" data-iv="none">None</button></div>
+    <div class="code" id="odCode"></div>
+    <div class="out" id="odOut"></div>
+    <div id="odMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🔥 raise: 문법은 맞아도 허용할 수 없는 값</h2>
+    <div class="code"><span class="k">class</span> <span class="f">OverheatingError</span>(Exception): <span class="k">pass</span>
+
+<span class="k">def</span> <span class="f">set_target</span>(t, limit=<span class="n">100</span>):
+    <span class="k">if</span> t &gt; limit:
+        <span class="k">raise</span> OverheatingError(<span class="s">f"목표 {t}도 &gt; 한계 {limit}도"</span>)
+    <span class="k">return</span> t</div>
+    <div class="row" style="margin-top:8px"><span class="lbl">목표 온도</span><b id="rsV" style="min-width:52px">150도</b></div>
+    <input type="range" id="rsT" min="20" max="150" value="150" step="5" aria-label="목표 온도">
+    <canvas id="rsCv"></canvas>
+    <div class="row" style="margin-top:8px"><button class="btn" id="rsGo">set_target() 호출</button></div>
+    <div class="out" id="rsOut"></div>
+    <div class="say">예외 이름만 보고도 무슨 일이 생겼는지 압니다. 잘 지은 예외 이름은 <b>그 자체로 문서</b>입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>🙈 가장 위험한 습관: except: pass</h2>
+    <div class="row"><button class="pill on" data-ps="pass">except Exception: pass</button><button class="pill" data-ps="log">구체적으로 + 기록</button></div>
+    <div class="code" id="psCode"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="psRun">▶ 5대 설비 평균 온도</button></div>
+    <div class="out" id="psOut"></div>
+    <div id="psMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>⌨️ 이름 없는 except는 중지 키까지 삼킨다</h2>
+    <div class="row"><button class="pill on" data-bx="bare">except:</button><button class="pill" data-bx="exc">except Exception:</button></div>
+    <div class="code" id="bxCode"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="bxRun">▶ 실행</button><button class="btn red" id="bxStop" disabled>Ctrl+C 중지</button></div>
+    <div class="out" id="bxOut"></div>
+    <div id="bxMsg"></div>
+  </div>
+</section>
+
+<!-- ③ -->
+<section id="tab-t3" hidden>
+  <div class="card">
+    <h2>📂 모드 한 글자의 차이</h2>
+    <table class="mtab">
+      <tr><th>모드</th><th>뜻</th><th>파일이 없으면</th><th>있으면</th></tr>
+      <tr><td>r</td><td>읽기</td><td>FileNotFoundError</td><td>처음부터 읽음</td></tr>
+      <tr><td>w</td><td>쓰기</td><td>새로 만듦</td><td><b style="color:#ff7d7d">모두 지우고</b> 씀</td></tr>
+      <tr><td>a</td><td>추가</td><td>새로 만듦</td><td>끝에 <b style="color:#6fdc9a">이어</b> 씀</td></tr>
+      <tr><td>b</td><td colspan="3">rb·wb처럼 붙여 사진·압축 파일 같은 바이너리로</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>🧪 파일 실험실</h2>
+    <div class="row"><span class="lbl">시작 상태</span><button class="pill on" data-fs="a">A 한 줄</button><button class="pill" data-fs="year">1년치 기록</button><button class="pill" data-fs="none">파일 없음</button></div>
+    <div class="row"><span class="lbl">모드</span><button class="pill on" data-md="w">"w"</button><button class="pill" data-md="a">"a"</button><button class="pill" data-md="r">"r"</button></div>
+    <div class="row"><span class="lbl">쓸 내용</span><button class="pill on" data-wt="B">B</button><button class="pill" data-wt="C">C</button><button class="pill" data-wt="오늘 기록">오늘 기록</button></div>
+    <div class="code" id="fxCode"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="fxGo">▶ 열고 실행</button></div>
+    <div class="file" id="fxFile"></div>
+    <div class="out" id="fxOut"></div>
+    <div id="fxMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>❓ 퀴즈 ②</h2>
+    <div class="say q"><b>A</b> 한 줄이 든 파일을 <b>"w"</b> 모드로 열어 B를 쓰고, 다시 <b>"a"</b> 모드로 열어 C를 씁니다. 파일에는 무엇이 남을까요?</div>
+    <div class="opts" id="qz2">
+      <button data-a="ABC">A B C</button>
+      <button data-a="BC">B C</button>
+      <button data-a="C">C</button>
+    </div>
+    <div id="qz2Msg"></div>
+    <div class="row" style="margin-top:8px"><button class="btn sec sm" id="qz2Play">실험실에서 직접 재현 ▶</button></div>
+  </div>
+
+  <div class="card">
+    <h2>🔤 인코딩은 왜 적나요?</h2>
+    <p class="note" style="margin-top:0">같은 글자 <b>"온도"</b>도 인코딩마다 바이트가 다릅니다.</p>
+    <div class="row"><button class="pill on" data-ec="ok">utf-8로 쓰고 utf-8로 읽기</button><button class="pill" data-ec="bad">utf-8로 쓰고 cp949로 읽기</button></div>
+    <div class="out" id="ecOut"></div>
+    <div class="say">운영체제마다 기본 인코딩이 다릅니다. 한글 파일이라면 <b>encoding="utf-8"</b>을 적어 두는 습관이 안전합니다.</div>
+  </div>
+</section>
+
+<!-- ④ -->
+<section id="tab-t4" hidden>
+  <div class="card">
+    <h2>📦 버퍼: 0바이트의 비밀</h2>
+    <div class="row"><button class="pill on" data-bm="plain">open … close()</button><button class="pill" data-bm="with">with open(…)</button></div>
+    <div class="code" id="bfCode"></div>
+    <canvas id="bfCv"></canvas>
+    <div class="stats">
+      <div>쓴 줄<b id="bfL">0</b></div>
+      <div>버퍼 (메모리)<b id="bfB">0</b></div>
+      <div>디스크 파일<b id="bfD">0</b></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sec sm" id="bf1">+1줄</button>
+      <button class="btn sec sm" id="bf100">+100줄</button>
+      <button class="btn sec sm" id="bfClose">close()</button>
+      <button class="btn sec sm" id="bfExc">⚠️ 예외 발생</button>
+      <button class="btn red sm" id="bfKill">💥 강제 종료</button>
+      <button class="btn sec sm" id="bfReset">↺ 처음부터</button>
+    </div>
+    <div id="bfMsg"></div>
+    <p class="note">한 줄 = <span id="bfLine" style="font-family:ui-monospace,Menlo,monospace"></span> (<b id="bfLb"></b>바이트). 버퍼가 <b>8,192바이트</b>를 넘거나 close()를 부르면 그때 한꺼번에 디스크로 내보냅니다(flush, 파이썬 3.13에서 확인한 동작).</p>
+  </div>
+
+  <div class="card">
+    <h2>🔒 with 문 = try·finally를 대신 써 주는 것</h2>
+    <div class="code"><span class="k">with</span> <span class="f">open</span>(<span class="s">"t.txt"</span>, <span class="s">"w"</span>) <span class="k">as</span> g:
+    g.write(<span class="s">"abc"</span>)
+    <span class="n">1</span> / <span class="n">0</span>            <span class="c"># 블록 안에서 예외!</span>
+<span class="c"># ↓ 블록 밖에서 확인</span>
+<span class="f">print</span>(g.closed, os.path.getsize(<span class="s">"t.txt"</span>))</div>
+    <div class="out"><span class="e">ZeroDivisionError: division by zero</span>   <span class="p">(except로 잡은 뒤 확인)</span>
+<span class="o">True 3</span>   <span class="p">← 닫혀 있고, 3바이트 저장됨</span></div>
+    <div class="code"><span class="c"># with 문이 사실상 해 주는 일</span>
+f = <span class="f">open</span>(<span class="s">"t.txt"</span>, <span class="s">"w"</span>)        <span class="c"># __enter__</span>
+<span class="k">try</span>:
+    f.write(<span class="s">"abc"</span>); <span class="n">1</span> / <span class="n">0</span>
+<span class="k">finally</span>:
+    f.close()                     <span class="c"># __exit__ — 예외가 나도 실행</span></div>
+    <div class="say">파일을 열 때는 <b>with 문</b> — 오늘의 황금률입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>📊 CSV: 엑셀에서 줄마다 빈칸이 생긴다면</h2>
+    <div class="row"><button class="pill on" data-nl="def">newline 생략 (윈도우)</button><button class="pill" data-nl="empty">newline=""</button></div>
+    <div class="code" id="csCode"></div>
+    <div class="out" id="csOut"></div>
+    <table class="xl" id="csXl"></table>
+    <div id="csMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🧰 강건한 로그 분석기</h2>
+    <p class="note" style="margin-top:0">설비 로그를 한 줄씩 읽어 <b>ERROR</b> 줄을 설비별로 셉니다. 망가진 줄은 건너뛰고 기록합니다.</p>
+    <div class="row"><button class="pill on" data-lg="ok">로그 파일 있음</button><button class="pill" data-lg="none">파일 이름 오타</button></div>
+    <div class="code" id="lgCode"></div>
+    <div class="code" id="lgLines" style="font-size:.74rem"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="lgRun">▶ 분석</button></div>
+    <div class="cnt" id="lgCnt"></div>
+    <div class="out" id="lgOut"></div>
+    <div class="say">한 줄이 망가져도 나머지는 끝까지 읽는 것 — 그것이 <b>강건한 프로그램</b>입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>📌 세 줄 정리</h2>
+    <div class="sum3"><ol>
+      <li>구문 에러는 <b>고치고</b>, 예외는 try·except로 <b>대비하며</b>, 구체적인 예외를 먼저 잡는다.</li>
+      <li>else는 <b>성공했을 때만</b>, finally는 <b>언제나</b> 실행되고, 예외를 숨기는 pass는 피한다.</li>
+      <li>w는 <b>지우고</b> a는 <b>잇는다</b>. 파일은 with 문으로 열어 버퍼까지 안전하게 닫는다.</li>
+    </ol></div>
+  </div>
+
+  <div class="card">
+    <h2>🤔 생각해 볼 질문</h2>
+    <p class="note" style="margin-top:0">지금 쓰는 코드 중에 <b>open만 하고 close를 잊은 곳</b>, 혹은 <b>예외를 pass로 덮어 둔 곳</b>이 있지 않나요? 찾은 곳을 적어 두고 with 문과 구체적인 예외 이름으로 바꿔 보세요. (이 기기에만 저장)</p>
+    <div class="row" style="margin-top:8px"><input type="text" id="myIn" maxlength="60" placeholder="예: 성적 저장 함수의 open … close"><button class="btn sm" id="myAdd">추가</button></div>
+    <div class="mine" id="mine"></div>
+  </div>
+</section>
+
+<footer>© 2026 정필 수심명 · <a href="https://blog.naver.com/omyman" target="_blank" rel="noopener">blog.naver.com/omyman</a><br>파이썬 07 부록 · 인터넷 없이 동작</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),1800);}
+const vib=n=>{try{navigator.vibrate&&navigator.vibrate(n);}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function prep(cv,ratio){const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth||320,h=Math.round(w*ratio);
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return{c,w,h};}
+function T(c,s,x,y,col,size,al,bl,wt){c.fillStyle=col;c.font=`${wt||''} ${size||12}px -apple-system,"Malgun Gothic",sans-serif`;c.textAlign=al||'center';c.textBaseline=bl||'middle';c.fillText(s,x,y);}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function single(sel,attr,fn){$$(sel).forEach(b=>b.onclick=()=>{$$(sel).forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset[attr]);});}
+function quiz(id,ans,fn){$$(`#${id} button`).forEach(b=>b.onclick=()=>{const ok=b.dataset.a===ans;$$(`#${id} button`).forEach(x=>x.className=x.dataset.a===ans?'right':x===b?'wrong':'');vib(ok?[30,40,60]:80);$(`#${id}Msg`).innerHTML=fn(ok);});}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fmt=n=>n.toLocaleString('en-US');
+/* 코드 줄 렌더: [텍스트(HTML), 키] */
+function codeLines(el,lines){el.innerHTML=lines.map((l,i)=>`<span class="ln" data-k="${l[1]||''}" id="${el.id}_${i}">${l[0]||' '}</span>`).join('');}
+function hlk(el,k,cls){$$(`#${el.id} .ln`).forEach(x=>{x.classList.remove('hl','err');});if(k!=null)$$(`#${el.id} .ln`).filter(x=>x.dataset.k===k).forEach(x=>x.classList.add(cls||'hl'));}
+const K=s=>`<span class="k">${s}</span>`,S=s=>`<span class="s">${s}</span>`,N=s=>`<span class="n">${s}</span>`,F=s=>`<span class="f">${s}</span>`,C=s=>`<span class="c">${s}</span>`;
+const TB=(code,last)=>`<span class="p">Traceback (most recent call last):\n  File "&lt;stdin&gt;", line 1, in &lt;module&gt;\n    ${esc(code)}</span>\n<span class="e">${esc(last)}</span>`;
+
+/* ===== ① 구문 에러 vs 예외 ===== */
+$$('#synOps button').forEach(b=>b.onclick=()=>{$$('#synOps button').forEach(x=>x.classList.toggle('on',x===b));
+  if(b.dataset.s==='syn'){$('#synOut').innerHTML=`<span class="p">  File "main.py", line 2\n    print("끝"\n         ^</span>\n<span class="e">SyntaxError: '(' was never closed</span>`;
+    $('#synSay').innerHTML='"시작"조차 <b>찍히지 않았습니다</b>. 파이썬이 실행 전에 코드를 읽다가 멈췄기 때문입니다. 구문 에러는 try로 잡을 수 없고 <b>고쳐야</b> 합니다.';}
+  else{$('#synOut').innerHTML=`<span class="o">시작</span>\n<span class="p">Traceback (most recent call last):\n  File "main.py", line 2, in &lt;module&gt;\n    print(10 / 0)</span>\n<span class="e">ZeroDivisionError: division by zero</span>`;
+    $('#synSay').innerHTML='"시작"은 <b>찍혔습니다</b>. 문법은 맞고 실행 도중에 문제가 생긴 <b>예외</b>입니다. 예외는 붙잡아 <b>대비</b>할 수 있습니다.';}
+  vib(30);});
+
+/* ===== ① 예외 6종 ===== */
+const EX=[
+ {c:'run_time = 0\nprint(1200 / run_time)',n:'ZeroDivisionError',m:'division by zero',h:'가동 시간 0으로 생산량을 나눔'},
+ {c:'temps = [21, 22, 23, 24, 25]\nprint(temps[5])',n:'IndexError',m:'list index out of range',h:'다섯 칸 리스트의 번호는 0~4'},
+ {c:'out = {"M101": 120}\nprint(out["M999"])',n:'KeyError',m:"'M999'",h:'딕셔너리에 없는 설비 번호'},
+ {c:'float("공정실패")',n:'ValueError',m:"could not convert string to float: '공정실패'",h:'자료형(문자열)은 맞지만 값이 숫자가 아님'},
+ {c:'open("없는파일.txt")',n:'FileNotFoundError',m:"[Errno 2] No such file or directory: '없는파일.txt'",h:'없는 파일을 읽으려 함'},
+ {c:'print("온도" + 5)',n:'TypeError',m:'can only concatenate str (not "int") to str',h:'글자에 숫자를 더함'}];
+$('#exOps').innerHTML=EX.map((e,i)=>`<button data-i="${i}">${esc(e.c).replace(/\n/g,'<br>')}</button>`).join('');
+$$('#exOps button').forEach(b=>b.onclick=()=>{$$('#exOps button').forEach(x=>x.classList.toggle('on',x===b));const e=EX[+b.dataset.i];const ls=e.c.split('\n');
+  $('#exOut').innerHTML=TB(ls[ls.length-1],e.n+': '+e.m);$('#exSay').innerHTML=`<b>${e.n}</b> — ${esc(e.h)}`;vib(30);});
+
+/* ===== ① 맞히기 ===== */
+const NAMES=['ZeroDivisionError','IndexError','KeyError','ValueError','FileNotFoundError','TypeError'];
+const MG=[
+ {c:'int("12개")',a:'ValueError'},{c:'parts = "M101,23.5".split(",")\nprint(parts[2])',a:'IndexError'},
+ {c:'avg = total / len([])',a:'ZeroDivisionError'},{c:'cfg = {"limit": 100}\ncfg["Limit"]',a:'KeyError'},
+ {c:'"생산량: " + 120',a:'TypeError'},{c:'open("2025_설비로그.txt", "r")',a:'FileNotFoundError'},
+ {c:'float("23.5℃")',a:'ValueError'},{c:'len(42)',a:'TypeError'}];
+let mgOrder=[],mgI=0,mgOk=0,mgDone=0;
+function mgShuffle(){mgOrder=MG.map((_,i)=>i).sort(()=>Math.random()-.5);mgI=0;mgOk=0;mgDone=0;}
+function mgShow(){const q=MG[mgOrder[mgI]];$('#mgCode').textContent=q.c;$('#mgMsg').innerHTML='';
+  const opts=[q.a,...NAMES.filter(n=>n!==q.a).sort(()=>Math.random()-.5).slice(0,3)].sort(()=>Math.random()-.5);
+  $('#mgOpts').innerHTML=opts.map(o=>`<button data-a="${o}">${o}</button>`).join('');
+  $('#mgSc').textContent=`(${mgI+1}/${MG.length} · 맞힘 ${mgOk})`;let answered=false;
+  $$('#mgOpts button').forEach(b=>b.onclick=()=>{if(answered)return;answered=true;const ok=b.dataset.a===q.a;if(ok)mgOk++;mgDone++;
+    $$('#mgOpts button').forEach(x=>x.className=x.dataset.a===q.a?'right':x===b?'wrong':'');vib(ok?[30,40,60]:80);
+    $('#mgSc').textContent=`(${mgI+1}/${MG.length} · 맞힘 ${mgOk})`;
+    $('#mgMsg').innerHTML=`<div class="res ${ok?'g':'r'}">${ok?'정답!':'아쉽습니다.'} <b>${q.a}</b>${mgDone===MG.length?` — 전체 ${MG.length}문제 중 <b>${mgOk}</b>개 맞힘!`:''}</div>`;});}
+$('#mgNext').onclick=()=>{mgI++;if(mgI>=MG.length){mgShuffle();toast('새 순서로 다시 시작');}mgShow();};
+
+/* ===== ① 센서 스트림 ===== */
+const SV=['23.5','24.1','공정실패','22.8','','23.9','25.0'];let stMode='no',stBusy=false;
+function stCodeDraw(){const el=$('#stCode');
+  if(stMode==='no')codeLines(el,[[`vals = []`,'init'],[`${K('for')} s ${K('in')} readings:`,'for'],[`    vals.append(${F('float')}(s))`,'conv'],[`${F('print')}(${S('"평균"')}, ${F('sum')}(vals) / ${F('len')}(vals))`,'end']]);
+  else codeLines(el,[[`vals = []`,'init'],[`${K('for')} s ${K('in')} readings:`,'for'],[`    ${K('try')}:`,'try'],[`        vals.append(${F('float')}(s))`,'conv'],[`    ${K('except')} ValueError ${K('as')} e:`,'exc'],[`        ${F('print')}(${S('"건너뜀:"')}, e)`,'log'],[`${F('print')}(${S('"평균"')}, ${F('round')}(${F('sum')}(vals) / ${F('len')}(vals), ${N('2')}))`,'end']]);
+  $('#stStream').innerHTML=SV.map((v,i)=>`<span id="sv${i}">${v===''?'(빈칸)':esc(v)}</span>`).join('');$('#stOut').innerHTML='';$('#stMsg').innerHTML='';hlk($('#stCode'),null);}
+single('[data-st]','st',m=>{if(stBusy)return;stMode=m;stCodeDraw();});
+$('#stRun').onclick=async()=>{if(stBusy)return;stBusy=true;stCodeDraw();const el=$('#stCode'),out=$('#stOut');const vals=[];let log='';
+  for(let i=0;i<SV.length;i++){const s=SV[i],sp=$('#sv'+i);sp.classList.add('cur');hlk(el,'conv');await sleep(380);const n=s.trim()===''?NaN:Number(s);sp.classList.remove('cur');
+    if(isNaN(n)){sp.classList.add('bad');vib(80);
+      if(stMode==='no'){hlk(el,'conv','err');for(let j=i+1;j<SV.length;j++)$('#sv'+j).classList.add('skip');
+        out.innerHTML=`<span class="p">Traceback (most recent call last):\n  File "sensor.py", line 3, in &lt;module&gt;\n    vals.append(float(s))</span>\n<span class="e">ValueError: could not convert string to float: '${esc(s)}'</span>`;
+        $('#stMsg').innerHTML=`<div class="res r">3번째 값에서 <b>프로그램 전체가 멈췄습니다</b>. 뒤의 정상 값 ${SV.length-i-1}개는 읽지도 못했고, 평균도 나오지 않습니다.</div>`;stBusy=false;return;}
+      hlk(el,'exc');await sleep(250);log+=`<span class="w">건너뜀: could not convert string to float: '${esc(s)}'</span>\n`;out.innerHTML=log;await sleep(250);}
+    else{sp.classList.add('ok');vals.push(n);}}
+  hlk(el,'end');const avg=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*100)/100;log+=`<span class="o">평균 ${avg}</span>`;out.innerHTML=log;
+  $('#stMsg').innerHTML=`<div class="res g">이상한 값 2개는 <b>기록하고 건너뛰었고</b>, 정상 값 ${vals.length}개로 평균을 냈습니다. 센서 하나가 이상해도 공장 전체 프로그램은 멈추지 않습니다.</div>`;stBusy=false;};
+
+/* ===== ② 흐름 ===== */
+let flX=2,flBusy=false;
+function flDraw(){const boom=$('#flBoom').checked;codeLines($('#flCode'),[
+  [`${K('try')}:`,'try'],[`    r = ${N('10')} / x`,'div'],[`${K('except')} ZeroDivisionError:`,'exc'],[`    ${F('print')}(${S('"E"')})`,'pe'],
+  ...(boom?[[`    ${F('print')}(reslt)   ${C('# 오타! NameError')}`,'boom']]:[]),
+  [`${K('else')}:`,'else'],[`    ${F('print')}(${S('"L"')})`,'pl'],[`${K('finally')}:`,'fin'],[`    ${F('print')}(${S('"F"')})`,'pf'],[`${F('print')}(${S('"다음 작업"')})`,'next']]);
+  $('#flOut').innerHTML=`<span class="p">x = ${flX}</span>`;$('#flMsg').innerHTML='';}
+single('[data-dv]','dv',v=>{if(flBusy)return;flX=+v;flDraw();});
+$('#flBoom').onchange=()=>{if(flBusy)return;flDraw();};
+$('#flRun').onclick=async()=>{if(flBusy)return;flBusy=true;flDraw();const el=$('#flCode'),boom=$('#flBoom').checked;let o=`<span class="p">x = ${flX}</span>\n`;const put=s=>{o+=s+'\n';$('#flOut').innerHTML=o;};
+  const st=async(k,cls)=>{hlk(el,k,cls);await sleep(520);};
+  await st('try');await st('div',flX===0?'err':'hl');let msg='';
+  if(flX===0){put('<span class="p">  ↳ ZeroDivisionError 발생 → 나머지 try 줄 건너뜀</span>');await st('exc');await st('pe');put('<span class="o">E</span>');
+    if(boom){await st('boom','err');put('<span class="p">  ↳ except 안에서 NameError 발생!</span>');await st('fin');await st('pf');put('<span class="o">F</span>');
+      put(`<span class="e">NameError: name 'reslt' is not defined</span>`);hlk(el,'next','err');$$('#flCode .ln').filter(x=>x.dataset.k==='next').forEach(x=>x.classList.add('dead'));
+      msg=`<div class="res y">except에서 또 예외가 났는데도 <b>F는 출력</b>됐습니다. finally가 정리 작업의 <b>마지막 보루</b>인 이유입니다. 다만 새 예외는 위로 전달되어 "다음 작업"은 실행되지 않았습니다.</div>`;}
+    else{$$('#flCode .ln').filter(x=>['else','pl'].includes(x.dataset.k)).forEach(x=>x.classList.add('dead'));await st('fin');await st('pf');put('<span class="o">F</span>');await st('next');put('<span class="o">다음 작업</span>');
+      msg=`<div class="res y">출력 <b>E F</b>. 예외가 났으니 <b>else는 건너뛰고</b>, finally는 반드시 실행됩니다.</div>`;}}
+  else{put('<span class="p">  ↳ r = 5.0, 예외 없음</span>');$$('#flCode .ln').filter(x=>['exc','pe','boom'].includes(x.dataset.k)).forEach(x=>x.classList.add('dead'));
+    await st('else');await st('pl');put('<span class="o">L</span>');await st('fin');await st('pf');put('<span class="o">F</span>');await st('next');put('<span class="o">다음 작업</span>');
+    msg=`<div class="res g">출력 <b>L F</b>. 예외 없이 끝났으니 except는 건너뛰고 <b>else</b>가, 마지막으로 <b>finally</b>가 실행됩니다.${boom?' (except를 지나지 않았으니 오타도 터지지 않았습니다.)':''}</div>`;}
+  hlk(el,null);$('#flMsg').innerHTML=msg;flBusy=false;};
+quiz('qz1','LF',ok=>`<div class="res ${ok?'g':'r'}">${ok?'정답!':'정답은 <b>L F</b>입니다.'} 10 / 2는 5.0으로 문제없이 끝나니 except는 건너뛰고 else, 마지막으로 finally가 실행됩니다. 나누는 수가 0이었다면 <b>E F</b> — 어느 쪽이든 <b>F는 꼭</b> 나옵니다. 위의 흐름 실험에서 x = 0으로 바꿔 확인해 보세요.</div>`);
+
+/* ===== ② except 순서 ===== */
+let odO='good',odV='txt';
+const OD={txt:{lit:'"공정실패"',ex:'ValueError',msg:"could not convert string to float: '공정실패'"},zero:{lit:'"0"',ex:'ZeroDivisionError',msg:'float division by zero'},none:{lit:'None',ex:'TypeError',msg:"float() argument must be a string or a real number, not 'NoneType'"}};
+function odDraw(){const v=OD[odV];const head=[[`s = ${S(esc(v.lit)).replace('<span class="s">None</span>','None')}`,''],[`${K('try')}:`,''],[`    r = ${N('100')} / ${F('float')}(s)`,'']];
+  const blkV=[[`${K('except')} ValueError:`,'V'],[`    ${F('print')}(${S('"숫자가 아님"')})`,'V']],blkZ=[[`${K('except')} ZeroDivisionError:`,'Z'],[`    ${F('print')}(${S('"0으로 나눔"')})`,'Z']],blkE=[[`${K('except')} Exception ${K('as')} e:`,'E'],[`    ${F('print')}(${S('"기타:"')}, ${F('type')}(e).__name__)`,'E']];
+  codeLines($('#odCode'),odO==='good'?[...head,...blkV,...blkZ,...blkE]:[...head,...blkE,...blkV,...blkZ]);
+  let hit;if(odO==='bad')hit='E';else hit=v.ex==='ValueError'?'V':v.ex==='ZeroDivisionError'?'Z':'E';
+  hlk($('#odCode'),hit);if(odO==='bad')$$('#odCode .ln').filter(x=>x.dataset.k==='V'||x.dataset.k==='Z').forEach(x=>x.classList.add('dead'));
+  const said=hit==='V'?'숫자가 아님':hit==='Z'?'0으로 나눔':'기타: '+v.ex;
+  $('#odOut').innerHTML=`<span class="p">발생한 예외: ${v.ex}: ${esc(v.msg)}</span>\n<span class="o">${esc(said)}</span>`;
+  $('#odMsg').innerHTML=odO==='bad'?`<div class="res r">모든 예외의 부모인 <b>Exception</b>이 맨 위에 있어 무엇이든 먼저 잡아 버립니다. 아래의 ValueError, ZeroDivisionError 블록에는 <b>영원히 닿지 않습니다</b>(흐린 줄).</div>`
+    :`<div class="res g">except는 <b>위에서부터</b> 맞는 것을 찾습니다. 구체적인 예외가 위에 있어 ${v.ex==='TypeError'?'준비 못 한 TypeError는 맨 아래 Exception이 받아 줍니다':`<b>${v.ex}</b>가 제 블록에서 처리됩니다`}.</div>`;}
+single('[data-od]','od',v=>{odO=v;odDraw();});single('[data-iv]','iv',v=>{odV=v;odDraw();});
+
+/* ===== ② raise ===== */
+function rsDraw(){const t=+$('#rsT').value;$('#rsV').textContent=t+'도';const cv=$('#rsCv');const{c,w,h}=prep(cv,.22);
+  const x0=20,x1=w-20,y=h*.55,sc=v=>x0+(v-0)/(160)*(x1-x0);
+  const g=c.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'#2f6fd0');g.addColorStop(.55,'#6fdc9a');g.addColorStop(.63,'#ffd166');g.addColorStop(1,'#ff4d4d');
+  rr(c,x0,y-7,x1-x0,14,7);c.fillStyle='#25303d';c.fill();rr(c,x0,y-7,sc(t)-x0,14,7);c.fillStyle=g;c.fill();
+  c.strokeStyle='#ff7d7d';c.setLineDash([4,3]);c.beginPath();c.moveTo(sc(100),y-18);c.lineTo(sc(100),y+18);c.stroke();c.setLineDash([]);
+  T(c,'한계 100도',sc(100),y-24,'#ff7d7d',11);T(c,t+'도',sc(t),y+22,t>100?'#ff7d7d':'#eff3f8',12,'center','middle','700');T(c,'0',x0,y+22,'#a3b0c2',10);T(c,'160',x1,y+22,'#a3b0c2',10);}
+$('#rsT').oninput=()=>{rsDraw();$('#rsOut').innerHTML='';};
+$('#rsGo').onclick=()=>{const t=+$('#rsT').value;if(t>100){vib([60,40,60]);$('#rsOut').innerHTML=`<span class="p">Traceback (most recent call last):\n  ...\n    raise OverheatingError(f"목표 {t}도 &gt; 한계 {limit}도")</span>\n<span class="e">OverheatingError: 목표 ${t}도 &gt; 한계 100도</span>\n<span class="p">→ 계산은 되지만 위험한 값이라 일부러 멈췄습니다.</span>`;}
+  else{vib(20);$('#rsOut').innerHTML=`<span class="o">목표 온도 ${t}도로 설정 완료</span>`;}};
+
+/* ===== ② pass ===== */
+let psM='pass';const PSV=[{id:'M101',v:72},{id:'M102',v:75},{id:'M103',v:null},{id:'M104',v:74},{id:'M105',v:null}];
+function psDraw(){codeLines($('#psCode'),psM==='pass'?[[`${K('for')} m ${K('in')} machines:`,''],[`    ${K('try')}:`,''],[`        temps.append(read_temp(m))`,''],[`    ${K('except')} Exception:`,''],[`        ${K('pass')}            ${C('# 조용히 무시')}`,'']]
+  :[[`${K('for')} m ${K('in')} machines:`,''],[`    ${K('try')}:`,''],[`        temps.append(read_temp(m))`,''],[`    ${K('except')} ConnectionError ${K('as')} e:`,''],[`        log.warning(${S('f"{m} 읽기 실패: {e}"')})`,'']]);$('#psOut').innerHTML='';$('#psMsg').innerHTML='';}
+single('[data-ps]','ps',v=>{psM=v;psDraw();});
+$('#psRun').onclick=()=>{const ok=PSV.filter(p=>p.v!=null),avg=ok.reduce((a,p)=>a+p.v,0)/ok.length;let o='';
+  if(psM==='log')PSV.filter(p=>p.v==null).forEach(p=>o+=`<span class="w">WARNING: ${p.id} 읽기 실패: 센서 연결 끊김</span>\n`);
+  o+=`<span class="o">평균 온도 ${avg.toFixed(1)}도 (${ok.length}대 기준)</span>`;$('#psOut').innerHTML=o;vib(30);
+  $('#psMsg').innerHTML=psM==='pass'?`<div class="res r">결과는 그럴듯하지만, 사실 <b>5대 중 2대의 센서가 끊겨</b> 있었습니다. 아무 경고도 없으니 아무도 모릅니다. 오류가 없는 게 아니라 <b>숨긴</b> 것 — 문제는 몇 주 뒤 엉뚱한 곳에서 터집니다.</div>`
+    :`<div class="res g">잡을 예외를 <b>구체적으로</b> 적고 <b>기록</b>을 남겼습니다. 같은 평균이라도 "2대가 빠졌다"는 사실이 보입니다. 처리할 수 없다면 다시 <b>raise</b>해서 위로 알립니다.</div>`;};
+
+/* ===== ② bare except ===== */
+let bxM='bare',bxTimer=null,bxN=0;
+function bxDraw(){codeLines($('#bxCode'),[[`${K('while')} ${K('True')}:`,''],[`    ${K('try')}:`,''],[`        check_line()      ${C('# 1초마다 점검')}`,'w'],[`    ${K(bxM==='bare'?'except:':'except')}${bxM==='bare'?'':' Exception:'}`,'x'],[`        ${K('pass')}`,'x']]);}
+function bxEnd(){clearInterval(bxTimer);bxTimer=null;$('#bxRun').disabled=false;$('#bxStop').disabled=true;hlk($('#bxCode'),null);}
+single('[data-bx]','bx',v=>{bxM=v;bxEnd();bxDraw();$('#bxOut').innerHTML='';$('#bxMsg').innerHTML='';});
+$('#bxRun').onclick=()=>{bxN=0;$('#bxOut').innerHTML='';$('#bxMsg').innerHTML='';$('#bxRun').disabled=true;$('#bxStop').disabled=false;
+  bxTimer=setInterval(()=>{bxN++;hlk($('#bxCode'),'w');$('#bxOut').innerHTML+=`<span class="p">점검 ${bxN}회 …</span>\n`;if(bxN>12){$('#bxOut').innerHTML=`<span class="p">… 점검 ${bxN}회 …</span>\n`;}},700);};
+$('#bxStop').onclick=()=>{vib([40,30,40]);if(bxM==='bare'){$('#bxOut').innerHTML+=`<span class="w">^C  ← KeyboardInterrupt가 except:에 잡혀 pass!</span>\n`;
+    $('#bxMsg').innerHTML=`<div class="res r">중지 키를 눌러도 <b>멈추지 않습니다</b>. 이름 없는 <b>except:</b>는 사용자가 누른 중지 신호(KeyboardInterrupt)까지 삼켜 버립니다. 멈추려면 "강제 종료"를 누르세요.</div>`;
+    $('#bxStop').textContent='Ctrl+C 또 누르기';if(!$('#bxKill')){const k=document.createElement('button');k.className='btn sec sm';k.id='bxKill';k.textContent='창 닫기(강제 종료)';$('#bxStop').after(k);k.onclick=()=>{bxEnd();$('#bxOut').innerHTML+=`<span class="e">[프로세스 강제 종료]</span>`;k.remove();$('#bxStop').textContent='Ctrl+C 중지';};}}
+  else{bxEnd();$('#bxOut').innerHTML+=`<span class="e">^C\nKeyboardInterrupt</span>`;$('#bxMsg').innerHTML=`<div class="res g">바로 멈췄습니다. KeyboardInterrupt는 Exception의 자식이 아니라서 <b>except Exception:</b>에는 잡히지 않습니다. (그래도 pass는 피하세요!)</div>`;}};
+
+/* ===== ③ 파일 실험실 ===== */
+const YEAR=Array.from({length:365},(_,i)=>{const d=new Date(2025,0,1+i);return `${d.getMonth()+1}/${d.getDate()} 정상`;});
+let fsStart='a',fxMode='w',fxText='B',fx=null,fxBusy=false;
+function fxInit(){fx=fsStart==='a'?['A']:fsStart==='year'?YEAR.slice():null;fxRender();$('#fxOut').innerHTML='';$('#fxMsg').innerHTML='';fxCode();}
+function fxRender(newIdx){const el=$('#fxFile');el.classList.remove('wipe','add');
+  if(fx===null){el.className='file none';el.innerHTML='<span class="t">📄 기록.txt</span>(파일이 없습니다)';return;}
+  el.className='file';const lines=fx.length>8?[...fx.slice(0,3).map(esc),`… (${fmt(fx.length-6)}줄 생략) …`,...fx.slice(-3).map((l,i)=>newIdx!=null&&fx.length-3+i>=newIdx?`<span class="new">${esc(l)}</span>`:esc(l))]
+    :fx.map((l,i)=>newIdx!=null&&i>=newIdx?`<span class="new">${esc(l)}</span>`:esc(l));
+  el.innerHTML=`<span class="t">📄 기록.txt — ${fmt(fx.length)}줄</span>`+(fx.length?lines.join('\n'):'<span style="color:#999">(비어 있음)</span>');}
+function fxCode(){const m=fxMode;$('#fxCode').innerHTML=m==='r'?`${K('with')} ${F('open')}(${S('"기록.txt"')}, ${S('"r"')}, encoding=${S('"utf-8"')}) ${K('as')} f:\n    ${F('print')}(f.read())`
+  :`${K('with')} ${F('open')}(${S('"기록.txt"')}, ${S(`"${m}"`)}, encoding=${S('"utf-8"')}) ${K('as')} f:\n    f.write(${S(`"${esc(fxText)}\\n"`)})`;}
+single('[data-fs]','fs',v=>{if(fxBusy)return;fsStart=v;fxInit();});
+single('[data-md]','md',v=>{fxMode=v;fxCode();});
+single('[data-wt]','wt',v=>{fxText=v;fxCode();});
+$('#fxGo').onclick=async()=>{if(fxBusy)return;fxBusy=true;const el=$('#fxFile'),m=fxMode;let msg='';
+  if(m==='r'){if(fx===null){$('#fxOut').innerHTML=`<span class="e">FileNotFoundError: [Errno 2] No such file or directory: '기록.txt'</span>`;msg='<div class="res r"><b>r</b>는 읽기 모드 — 파일이 없으면 만들지 않고 예외를 냅니다.</div>';vib(80);}
+    else{const show=fx.length>8?[...fx.slice(0,3),'…',...fx.slice(-2)]:fx;$('#fxOut').innerHTML=`<span class="o">${esc(show.join('\n'))||'(빈 문자열)'}</span>`;msg='<div class="res g">읽기만 했으니 파일은 그대로입니다.</div>';}}
+  else if(m==='w'){const had=fx===null?-1:fx.length;if(had>0){el.classList.add('wipe');await sleep(450);}fx=[];fxRender();await sleep(250);fx.push(fxText);fxRender(0);el.classList.add('add');
+    $('#fxOut').innerHTML=`<span class="p">${had<0?'파일이 없어 새로 만들고 썼습니다.':`열리는 순간 기존 ${fmt(had)}줄이 지워졌습니다.`}</span>`;
+    msg=had>1?`<div class="res r">"w"로 여는 <b>순간</b> ${fmt(had)}줄이 사라졌습니다. 한 글자 실수로 1년치 기록이 날아갑니다!</div>`:had===1?'<div class="res y">"w"는 <b>지우고 처음부터</b> 씁니다.</div>':'<div class="res g">"w"는 파일이 없으면 새로 만듭니다.</div>';vib(had>0?[60,40,60]:20);}
+  else{const was=fx===null;if(was)fx=[];const at=fx.length;fx.push(fxText);fxRender(at);el.classList.add('add');
+    $('#fxOut').innerHTML=`<span class="p">${was?'파일이 없어 새로 만들고 썼습니다.':`기존 ${fmt(at)}줄 뒤에 이어 썼습니다.`}</span>`;msg='<div class="res g">"a"는 <b>끝에 이어</b> 씁니다. 기록 파일은 추가 모드로!</div>';vib(20);}
+  $('#fxMsg').innerHTML=msg;fxBusy=false;};
+quiz('qz2','BC',ok=>`<div class="res ${ok?'g':'r'}">${ok?'정답!':'정답은 <b>B C</b>입니다.'} "w"로 여는 순간 A가 지워지고 B만 남습니다. 그다음 "a"는 추가 모드라 B 뒤에 C가 붙습니다. 기록 파일은 <b>a</b>, 매번 새로 만드는 보고서는 <b>w</b>로 구분합니다.</div>`);
+$('#qz2Play').onclick=async()=>{const pick=(sel,v)=>$$(sel).forEach(x=>x.classList.toggle('on',x.dataset[Object.keys(x.dataset)[0]]===v));
+  fsStart='a';pick('[data-fs]','a');fxInit();$('#fxFile').scrollIntoView({behavior:'smooth',block:'center'});await sleep(700);
+  fxMode='w';fxText='B';pick('[data-md]','w');pick('[data-wt]','B');fxCode();await sleep(300);await $('#fxGo').onclick();await sleep(1100);
+  fxMode='a';fxText='C';pick('[data-md]','a');pick('[data-wt]','C');fxCode();await sleep(300);await $('#fxGo').onclick();toast('결과: B C');};
+
+/* ===== ③ 인코딩 ===== */
+single('[data-ec]','ec',v=>ecDraw(v));
+function ecDraw(v){$('#ecOut').innerHTML=`<span class="p">"온도".encode("utf-8")  →</span> b'\\xec\\x98\\xa8\\xeb\\x8f\\x84'  <span class="w">(6바이트)</span>\n<span class="p">"온도".encode("cp949")  →</span> b'\\xbf\\xc2\\xb5\\xb5'  <span class="w">(4바이트)</span>\n\n`+
+  (v==='ok'?`<span class="p">utf-8로 읽기 →</span> <span class="o">온도</span>`:`<span class="p">cp949로 읽기 →</span> <span class="e">UnicodeDecodeError</span>  <span class="p">또는 깨진 글자</span> <span class="e">�삩�룄</span>`);}
+
+/* ===== ④ 버퍼 ===== */
+const LINE='2026-10-30 8:00,M101,온도,23.5,OK',LB=new TextEncoder().encode(LINE+'\n').length,BUF=8192;
+$('#bfLine').textContent=LINE+'\\n';$('#bfLb').textContent=LB;
+let bfM='plain',bf={lines:0,buf:0,disk:0,state:'open',lost:0},bfAnim=0;
+function bfCodeDraw(){const el=$('#bfCode');
+  if(bfM==='plain')codeLines(el,[[`f = ${F('open')}(${S('"설비기록.txt"')}, ${S('"w"')}, encoding=${S('"utf-8"')})`,'open'],[`${K('for')} line ${K('in')} lines:`,'w'],[`    f.write(line)`,'w'],[`f.close()              ${C('# 여기까지 와야 안전')}`,'close']]);
+  else codeLines(el,[[`${K('with')} ${F('open')}(${S('"설비기록.txt"')}, ${S('"w"')}, encoding=${S('"utf-8"')}) ${K('as')} f:`,'open'],[`    ${K('for')} line ${K('in')} lines:`,'w'],[`        f.write(line)`,'w'],[`${C('# 블록이 끝나면(예외가 나도) 자동으로 닫힘')}`,'close']]);}
+function bfReset(){bf={lines:0,buf:0,disk:0,state:'open',lost:0};bfCodeDraw();$('#bfMsg').innerHTML='';bfDraw();}
+function bfStats(){$('#bfL').textContent=fmt(bf.lines);$('#bfB').textContent=fmt(bf.buf)+'B';$('#bfD').textContent=fmt(bf.disk)+'B';
+  ['bf1','bf100','bfClose','bfExc','bfKill'].forEach(id=>$('#'+id).disabled=bf.state!=='open');$('#bfClose').hidden=bfM==='with';}
+function bfDraw(flash){const cv=$('#bfCv');const{c,w,h}=prep(cv,.5);bfStats();
+  const bw=w*.25,bx1=10,bx2=w/2-bw/2,bx3=w-10-bw,top=26,bh=h-60;
+  T(c,'🐍 프로그램',bx1+bw/2,14,'#a3b0c2',11);T(c,'📦 버퍼 (메모리)',bx2+bw/2,14,'#ffd166',11);T(c,'💾 디스크',bx3+bw/2,14,'#6fdc9a',11);
+  rr(c,bx1,top,bw,bh,10);c.fillStyle='#1c232e';c.fill();
+  const st=bf.state;const ps=st==='open'?'실행 중':st==='closed'?'정상 종료':st==='killed'?'💥 강제 종료':'⚠️ 예외로 멈춤';
+  T(c,ps,bx1+bw/2,top+bh/2-10,st==='killed'||st==='exc'?'#ff7d7d':'#eff3f8',12,'center','middle','700');T(c,fmt(bf.lines)+'줄 씀',bx1+bw/2,top+bh/2+12,'#a3b0c2',11);
+  rr(c,bx2,top,bw,bh,10);c.fillStyle='#10141b';c.fill();c.strokeStyle='#8a7a3a';c.lineWidth=1.5;c.stroke();
+  const fr=Math.min(1,bf.buf/BUF),fh=(bh-4)*fr;if(fh>0){rr(c,bx2+2,top+bh-2-fh,bw-4,fh,8);c.fillStyle=st==='killed'?'#5a2626':'#8a6d1f';c.fill();}
+  T(c,fmt(bf.buf),bx2+bw/2,top+bh/2-8,'#fff',14,'center','middle','800');T(c,'/ 8,192 B',bx2+bw/2,top+bh/2+12,'#a3b0c2',10);
+  rr(c,bx3,top,bw,bh,10);c.fillStyle='#10141b';c.fill();c.strokeStyle='#2f7a52';c.stroke();
+  const dr=Math.min(1,bf.disk/(BUF*3)),dh=(bh-4)*dr;if(dh>0){rr(c,bx3+2,top+bh-2-dh,bw-4,dh,8);c.fillStyle='#1f5a3c';c.fill();}
+  T(c,fmt(bf.disk),bx3+bw/2,top+bh/2-8,bf.disk?'#fff':'#ff7d7d',14,'center','middle','800');T(c,'바이트',bx3+bw/2,top+bh/2+12,'#a3b0c2',10);
+  c.strokeStyle='#55667f';c.lineWidth=2;[[bx1+bw,bx2],[bx2+bw,bx3]].forEach(([a,b],i)=>{const y=top+bh/2;c.beginPath();c.moveTo(a+4,y);c.lineTo(b-4,y);c.stroke();c.beginPath();c.moveTo(b-4,y);c.lineTo(b-10,y-5);c.lineTo(b-10,y+5);c.closePath();c.fillStyle='#55667f';c.fill();
+    if(flash===i){c.strokeStyle=i?'#6fdc9a':'#ffd166';c.lineWidth=4;c.beginPath();c.moveTo(a+4,y);c.lineTo(b-4,y);c.stroke();c.strokeStyle='#55667f';c.lineWidth=2;}});
+  T(c,'write',(bx1+bw+bx2)/2,top+bh/2-14,'#a3b0c2',10);T(c,'flush',(bx2+bw+bx3)/2,top+bh/2-14,'#a3b0c2',10);
+  if(bf.lost){T(c,`💨 ${fmt(bf.lost)}바이트 사라짐`,bx2+bw/2,top+bh+18,'#ff7d7d',12,'center','middle','700');}
+  else T(c,`한 줄 ${LB}바이트 · 파일 크기 ${fmt(bf.disk)}`,w/2,top+bh+18,'#a3b0c2',11);}
+function bfWrite(n){if(bf.state!=='open')return;let flushed=false;for(let i=0;i<n;i++){bf.lines++;bf.buf+=LB;if(bf.buf>BUF){bf.disk+=bf.buf;bf.buf=0;flushed=true;}}
+  hlk($('#bfCode'),'w');bfDraw(flushed?1:0);
+  $('#bfMsg').innerHTML=flushed?`<div class="res g">버퍼가 8,192바이트를 넘어 <b>한꺼번에 디스크로</b> 내보냈습니다. 지금 파일 크기 ${fmt(bf.disk)}바이트.</div>`
+    :bf.disk===0?`<div class="res y">${fmt(bf.lines)}줄(${fmt(bf.buf)}바이트)을 썼지만 아직 <b>버퍼 안</b>에만 있습니다. 디스크 파일은 <b>0바이트</b>!</div>`:`<div class="res y">새로 쓴 ${fmt(bf.buf)}바이트는 아직 버퍼 안에 있습니다.</div>`;vib(10);}
+$('#bf1').onclick=()=>bfWrite(1);$('#bf100').onclick=()=>bfWrite(100);
+$('#bfClose').onclick=()=>{if(bf.state!=='open')return;bf.disk+=bf.buf;bf.buf=0;bf.state='closed';hlk($('#bfCode'),'close');bfDraw(1);vib([20,30,20]);
+  $('#bfMsg').innerHTML=`<div class="res g">close()가 남은 내용을 <b>디스크로 내보내고</b> 파일을 닫았습니다. 파일 크기 <b>${fmt(bf.disk)}바이트</b> = ${fmt(bf.lines)}줄 × ${LB}.</div>`;};
+$('#bfExc').onclick=()=>{if(bf.state!=='open')return;vib([60,40,60]);
+  if(bfM==='with'){bf.disk+=bf.buf;bf.buf=0;bf.state='closed';hlk($('#bfCode'),'close');bfDraw(1);
+    $('#bfMsg').innerHTML=`<div class="res g">블록 안에서 예외가 났지만 with 문이 <b>자동으로 닫아</b> 주었습니다. 쓴 내용 <b>${fmt(bf.disk)}바이트</b>가 저장되었습니다.</div>`;}
+  else{bf.state='exc';hlk($('#bfCode'),'w','err');$$('#bfCode .ln').filter(x=>x.dataset.k==='close').forEach(x=>x.classList.add('dead'));bfDraw();
+    $('#bfMsg').innerHTML=`<div class="res r">예외 때문에 <b>close() 줄까지 가지 못했습니다</b>. 버퍼의 ${fmt(bf.buf)}바이트는 아직 디스크에 없습니다. 프로그램이 정상 종료되며 내보내질 수도 있지만 <b>보장은 없습니다</b>. 이어서 💥 강제 종료가 나면? → <b>with 문</b>으로 바꿔 보세요.</div>`;
+    $('#bfKill').disabled=false;}};
+$('#bfKill').onclick=()=>{if(bf.state!=='open'&&bf.state!=='exc')return;bf.lost=bf.buf;bf.state='killed';hlk($('#bfCode'),null);bfDraw();vib([100,50,100]);
+  $('#bfMsg').innerHTML=`<div class="res r">닫기 전에 강제로 꺼지자 버퍼 속 <b>${fmt(bf.lost)}바이트(${fmt(Math.round(bf.lost/LB))}줄)</b>가 그대로 사라졌습니다. 디스크에는 <b>${fmt(bf.disk)}바이트</b>만 남았습니다.${bf.disk===0?' — 첫 장면의 <b>0바이트 파일</b>이 바로 이것입니다.':''} (파이썬에서 os._exit로 직접 확인)</div>`;};
+$('#bfReset').onclick=bfReset;
+single('[data-bm]','bm',v=>{bfM=v;bfReset();});
+
+/* ===== ④ CSV ===== */
+let csNl='def';const ROWS=[['설비','생산량'],['M101','120'],['M102','95'],['M103','130']];
+function csDraw(){const empty=csNl==='empty';
+  $('#csCode').innerHTML=`${K('import')} csv\n${K('with')} ${F('open')}(${S('"실적.csv"')}, ${S('"w"')}, encoding=${S('"utf-8"')}${empty?`, newline=${S('""')}`:''}) ${K('as')} f:\n    csv.writer(f).writerows(rows)`;
+  const end=empty?'\\r\\n':'\\r<span class="e">\\r</span>\\n';
+  $('#csOut').innerHTML=`<span class="p">파일 속 실제 바이트</span>\n`+ROWS.map(r=>esc(r.join(','))+`<span class="w">${end}</span>`).join('\n');
+  const tr=[];let n=1;ROWS.forEach(r=>{tr.push(`<tr><td class="rn">${n++}</td><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`);if(!empty)tr.push(`<tr class="blank"><td class="rn">${n++}</td><td></td><td></td></tr>`);});
+  $('#csXl').innerHTML=tr.join('');
+  $('#csMsg').innerHTML=empty?`<div class="res g">csv 모듈이 붙인 <b>\\r\\n</b>이 그대로 저장되어 빈 줄이 없습니다. <b>with open · encoding · newline=""</b> — 세 가지를 함께!</div>`
+    :`<div class="res r">csv 모듈이 줄 끝에 이미 <b>\\r\\n</b>을 붙이는데, 윈도우의 텍스트 모드가 \\n을 또 \\r\\n으로 바꿔 <b>\\r\\r\\n</b>이 됩니다. 엑셀에서 열면 줄마다 빈 줄이 생깁니다.</div>`;}
+single('[data-nl]','nl',v=>{csNl=v;csDraw();});
+
+/* ===== ④ 로그 분석 ===== */
+const LOG=['08:01,M101,INFO,가동 시작','08:05,M102,ERROR,온도 초과','08:09,M101,ERROR,압력 저하','08:12,M102','08:15,M103,INFO,정상','08:20,M102,ERROR,온도 초과','08:31,M101,ERROR,센서 끊김','08:40,M102,ERROR,온도 초과'];
+let lgM='ok',lgBusy=false;
+function lgDraw(){codeLines($('#lgCode'),[[`${K('from')} collections ${K('import')} Counter`,''],[`cnt = Counter()`,''],[`${K('try')}:`,'t'],[`    ${K('with')} ${F('open')}(${S(lgM==='ok'?'"설비로그.txt"':'"설비로그.tx"')}, encoding=${S('"utf-8"')}) ${K('as')} f:`,'o'],
+  [`        ${K('for')} no, line ${K('in')} ${F('enumerate')}(f, ${N('1')}):`,'f'],[`            ${K('try')}:`,'f'],[`                t, eq, lv, msg = line.strip().split(${S('","')})`,'s'],[`            ${K('except')} ValueError:`,'v'],[`                ${F('print')}(${S('f"{no}번 줄 형식 오류, 건너뜀"')}); ${K('continue')}`,'v'],
+  [`            ${K('if')} lv == ${S('"ERROR"')}: cnt[eq] += ${N('1')}`,'c'],[`${K('except')} FileNotFoundError:`,'nf'],[`    ${F('print')}(${S('"로그 파일이 없습니다. 이름을 확인하세요."')})`,'nf']]);
+  $('#lgLines').innerHTML=LOG.map((l,i)=>`<span class="ln" id="lg${i}">${String(i+1).padStart(2)}│ ${esc(l)}</span>`).join('');$('#lgCnt').innerHTML='';$('#lgOut').innerHTML='';}
+single('[data-lg]','lg',v=>{if(lgBusy)return;lgM=v;lgDraw();});
+$('#lgRun').onclick=async()=>{if(lgBusy)return;lgBusy=true;lgDraw();const el=$('#lgCode');let o='';const cnt={};
+  hlk(el,'o');await sleep(400);
+  if(lgM==='none'){hlk(el,'nf','err');vib(80);$('#lgOut').innerHTML=`<span class="w">로그 파일이 없습니다. 이름을 확인하세요.</span>\n<span class="p">(FileNotFoundError를 잡아 안내만 하고 프로그램은 계속)</span>`;lgBusy=false;return;}
+  for(let i=0;i<LOG.length;i++){const ln=$('#lg'+i);ln.classList.add('hl');const p=LOG[i].split(',');hlk(el,'s');await sleep(330);
+    if(p.length!==4){ln.classList.replace('hl','err');hlk(el,'v','err');vib(60);o+=`<span class="w">${i+1}번 줄 형식 오류, 건너뜀</span>\n`;$('#lgOut').innerHTML=o;await sleep(400);continue;}
+    if(p[2]==='ERROR'){cnt[p[1]]=(cnt[p[1]]||0)+1;hlk(el,'c');}
+    const mx=Math.max(1,...Object.values(cnt));$('#lgCnt').innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="d"><span>${k}</span><div class="bar" style="width:${v/mx*100}%"></div><b>${v}</b></div>`).join('');
+    ln.classList.remove('hl');ln.classList.add('dead');await sleep(120);}
+  hlk(el,null);const srt=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);o+=`<span class="o">Counter({${srt.map(([k,v])=>`'${k}': ${v}`).join(', ')}})</span>`;$('#lgOut').innerHTML=o;$$('#lgLines .ln').forEach(x=>x.classList.remove('dead'));lgBusy=false;};
+
+/* 나의 예 */
+const MK='rescuetry.mine';let mine=[];try{mine=JSON.parse(localStorage.getItem(MK)||'[]');if(!Array.isArray(mine))mine=[];}catch(e){mine=[];}
+const saveM=()=>{try{localStorage.setItem(MK,JSON.stringify(mine));}catch(e){}};
+function drawMine(){$('#mine').innerHTML=mine.length?mine.map((m,i)=>`<div><span>🛟 ${esc(m)}</span><button data-d="${i}" aria-label="지우기">✕</button></div>`).join(''):'<p class="note">open 뒤 close가 없는 곳, except … pass가 첫 번째 후보입니다.</p>';
+  $$('#mine button').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.d,1);saveM();drawMine();});}
+$('#myAdd').onclick=()=>{const v=$('#myIn').value.trim();if(!v)return;mine.unshift(v);mine=mine.slice(0,30);saveM();$('#myIn').value='';drawMine();toast('고칠 곳 추가!');};
+$('#myIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#myAdd').click();});
+
+/* 탭 */
+function redraw(){if(!$('#tab-t2').hidden)rsDraw();if(!$('#tab-t4').hidden)bfDraw();}
+function show(t){$$('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));['t1','t2','t3','t4'].forEach(k=>$('#tab-'+k).hidden=k!==t);redraw();window.scrollTo(0,0);}
+$$('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(redraw,120);});
+mgShuffle();mgShow();stCodeDraw();flDraw();odDraw();psDraw();bxDraw();fxInit();ecDraw('ok');bfReset();csDraw();lgDraw();drawMine();
+})();
+</script>
+</body>
+</html>
